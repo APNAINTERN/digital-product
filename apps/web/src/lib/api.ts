@@ -17,13 +17,27 @@ export type ApiErrorPayload = {
 export const getApiErrorMessage = (error: unknown, fallback = 'Something went wrong') => {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as
-      | { message?: string; error?: string | { message?: string } }
+      | { message?: string; error?: string | { message?: string; code?: string } }
+      | string
       | undefined
-    if (typeof data?.message === 'string') return data.message
-    if (typeof data?.error === 'string') return data.error
-    if (data?.error && typeof data.error === 'object' && typeof data.error.message === 'string') {
-      return data.error.message
+
+    if (typeof data === 'string') {
+      if (/page could not be found|NOT_FOUND/i.test(data)) {
+        return 'The page could not be found'
+      }
+      const trimmed = data.trim()
+      if (trimmed) return trimmed.slice(0, 300)
     }
+
+    if (data && typeof data === 'object') {
+      if (typeof data.message === 'string') return data.message
+      if (typeof data.error === 'string') return data.error
+      if (data.error && typeof data.error === 'object' && typeof data.error.message === 'string') {
+        return data.error.message
+      }
+    }
+
+    if (error.response?.status === 404) return 'The page could not be found'
     return error.message || fallback
   }
 

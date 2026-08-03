@@ -1,0 +1,90 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+type ExpressApp = (req: unknown, res: unknown) => unknown;
+
+let appPromise: Promise<ExpressApp> | null = null;
+let seedPromise: Promise<void> | null = null;
+
+async function loadApp(): Promise<ExpressApp> {
+  if (!appPromise) {
+    appPromise = import('../apps/api/dist/app.js')
+      .then((mod) => (mod.default ?? mod) as ExpressApp)
+      .catch((error) => {
+        console.error('Failed to load Express app', error);
+        appPromise = null;
+        throw error;
+      });
+  }
+  return appPromise;
+}
+
+async function prepareDatabase(): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    if (!seedPromise) {
+      seedPromise = import('../apps/api/dist/lib/seedOnBoot.js')
+        .then(async (mod) => {
+          if (typeof mod.ensureSeedData === 'function') {
+            await mod.ensureSeedData();
+          }
+        })
+        .catch((error) => {
+          seedPromise = null;
+          throw error;
+        });
+    }
+    await seedPromise;
+    return { ok: true };
+  } catch (error) {
+    console.error('Database bootstrap failed', error);
+    return {
+      ok: false,
+      message:
+        'Database is not ready. In Vercel → Settings → Environment Variables set DATABASE_URL to your Supabase Postgres URI (Project Settings → Database → Connect → URI). Add ?sslmode=require',
+    };
+  }
+}
+
+/**
+ * Single entry for all /api/* traffic (via vercel.json rewrite).
+ * Nested paths like /api/auth/register do not work with api/[[...path]].ts on Vercel.
+ */
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const app = await loadApp();
+    const db = await prepareDatabase();
+
+    // Always allow health checks so deploy debugging is easy
+    const url = typeof req.url === 'string' ? req.url : '';
+    if (!db.ok && !url.includes('/api/health') && url !== '/health') {
+      res.status(503).json({
+        error: {
+          message: db.message,
+          code: 'DB_NOT_READY',
+        },
+      });
+      return;
+    }
+
+    if (url.includes('/api/health') || url === '/health') {
+      res.status(200).json({
+        status: db.ok ? 'ok' : 'degraded',
+        service: 'seo-vision-api',
+        database: db.ok ? 'ready' : 'not_ready',
+        timestamp: new Date().toISOString(),
+        ...(db.ok ? {} : { message: db.message }),
+      });
+      return;
+    }
+
+    return app(req, res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: {
+        message:
+          'API failed to start. Check Vercel build logs and ensure npm run vercel-build completed.',
+        code: 'API_BOOT_FAILED',
+      },
+    });
+  }
+}

@@ -76,7 +76,8 @@ export const RegisterPage = () => {
             required
           />
           <p className="text-xs text-[rgb(var(--muted-foreground))]">
-            Use a real email (e.g. Gmail). Fake domains like example.com are blocked by Supabase.
+            Use a real email (Gmail etc.). After deploy, Vercel must have DATABASE_URL set to your Supabase
+            Postgres URI or account creation will fail.
           </p>
         </div>
         <div className="space-y-2">
