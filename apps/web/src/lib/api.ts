@@ -10,8 +10,16 @@ export type ApiErrorPayload = {
 }
 
 export const getApiErrorMessage = (error: unknown, fallback = 'Something went wrong') => {
-  if (axios.isAxiosError<ApiErrorPayload>(error)) {
-    return error.response?.data?.message ?? error.response?.data?.error ?? error.message ?? fallback
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as
+      | { message?: string; error?: string | { message?: string } }
+      | undefined
+    if (typeof data?.message === 'string') return data.message
+    if (typeof data?.error === 'string') return data.error
+    if (data?.error && typeof data.error === 'object' && typeof data.error.message === 'string') {
+      return data.error.message
+    }
+    return error.message || fallback
   }
 
   return error instanceof Error ? error.message : fallback

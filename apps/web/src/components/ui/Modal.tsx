@@ -5,14 +5,20 @@ import { cn } from '@/lib/utils';
 
 type ModalProps = {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void;
+  onClose?: () => void;
   title: string;
   description?: string;
   children: ReactNode;
   className?: string;
 };
 
-export const Modal = ({ open, onOpenChange, title, description, children, className }: ModalProps) => {
+export const Modal = ({ open, onOpenChange, onClose, title, description, children, className }: ModalProps) => {
+  const close = () => {
+    onOpenChange?.(false);
+    onClose?.();
+  };
+
   useEffect(() => {
     if (!open) {
       return undefined;
@@ -20,13 +26,14 @@ export const Modal = ({ open, onOpenChange, title, description, children, classN
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onOpenChange(false);
+        onOpenChange?.(false);
+        onClose?.();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onOpenChange, open]);
+  }, [onClose, onOpenChange, open]);
 
   if (!open) {
     return null;
@@ -38,7 +45,7 @@ export const Modal = ({ open, onOpenChange, title, description, children, classN
         type="button"
         aria-label="Close modal"
         className="absolute inset-0 cursor-default"
-        onClick={() => onOpenChange(false)}
+        onClick={close}
       />
       <section
         role="dialog"
@@ -53,7 +60,7 @@ export const Modal = ({ open, onOpenChange, title, description, children, classN
             </h2>
             {description ? <p className="mt-1 text-sm text-[rgb(var(--muted-foreground))]">{description}</p> : null}
           </div>
-          <Button variant="ghost" size="icon" aria-label="Close modal" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" size="icon" aria-label="Close modal" onClick={close}>
             <X className="size-5" />
           </Button>
         </div>

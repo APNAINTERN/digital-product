@@ -16,18 +16,29 @@ const labelText: Record<Confidence, string> = {
 };
 
 type DataBadgeProps = {
-  confidence: Confidence;
+  confidence?: Confidence | string;
   className?: string;
 };
 
-export const DataBadge = ({ confidence, className }: DataBadgeProps) => (
-  <span className={cn('group relative inline-flex', className)}>
-    <Badge confidence={confidence} className="gap-1.5">
-      <Info className="size-3" />
-      {labelText[confidence]}
-    </Badge>
-    <span className="pointer-events-none absolute left-1/2 top-[calc(100%+0.6rem)] z-20 w-64 -translate-x-1/2 rounded-xl border border-[rgb(var(--border))] bg-slate-950 px-3 py-2 text-xs leading-relaxed text-slate-100 opacity-0 shadow-2xl transition group-hover:opacity-100 group-focus-within:opacity-100">
-      {tooltipText[confidence]}
+const normalizeConfidence = (value?: Confidence | string): Confidence => {
+  if (value === 'VERIFIED' || value === 'AI_GENERATED' || value === 'ESTIMATED') {
+    return value;
+  }
+  return 'ESTIMATED';
+};
+
+export const DataBadge = ({ confidence = 'ESTIMATED', className }: DataBadgeProps) => {
+  const normalized = normalizeConfidence(confidence);
+
+  return (
+    <span className={cn('group relative inline-flex', className)}>
+      <Badge confidence={normalized} className="gap-1.5">
+        <Info className="size-3" />
+        {labelText[normalized]}
+      </Badge>
+      <span className="pointer-events-none absolute left-1/2 top-[calc(100%+0.6rem)] z-20 w-64 -translate-x-1/2 rounded-xl border border-[rgb(var(--border))] bg-slate-950 px-3 py-2 text-xs leading-relaxed text-slate-100 opacity-0 shadow-2xl transition group-hover:opacity-100 group-focus-within:opacity-100">
+        {tooltipText[normalized]}
+      </span>
     </span>
-  </span>
-);
+  );
+};

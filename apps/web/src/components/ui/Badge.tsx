@@ -29,16 +29,36 @@ const confidenceVariant: Record<Confidence, VariantProps<typeof badgeVariants>['
   AI_GENERATED: 'teal',
 };
 
+type Tone = 'neutral' | 'good' | 'warning' | 'danger' | 'info';
+
+const toneVariant: Record<Tone, VariantProps<typeof badgeVariants>['variant']> = {
+  neutral: 'default',
+  good: 'green',
+  warning: 'amber',
+  danger: 'red',
+  info: 'teal',
+};
+
 export type BadgeProps = HTMLAttributes<HTMLSpanElement> &
   VariantProps<typeof badgeVariants> & {
     confidence?: Confidence;
+    tone?: Tone;
   };
 
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ className, variant, confidence, ...props }, ref) => (
+  ({ className, variant, confidence, tone, ...props }, ref) => (
     <span
       ref={ref}
-      className={cn(badgeVariants({ variant: confidence ? confidenceVariant[confidence] : variant }), className)}
+      className={cn(
+        badgeVariants({
+          variant: confidence
+            ? confidenceVariant[confidence]
+            : tone
+              ? toneVariant[tone]
+              : variant,
+        }),
+        className,
+      )}
       {...props}
     />
   ),

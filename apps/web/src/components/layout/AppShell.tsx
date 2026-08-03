@@ -74,7 +74,17 @@ export const AppShell = () => {
     navigate('/login');
   };
 
-  const links = user?.role === 'ADMIN' ? [...navItems, { label: 'Admin', href: '/app/admin', icon: Shield }] : navItems;
+  const links =
+    user?.role === 'ADMIN'
+      ? [
+          ...navItems,
+          { label: 'Admin', href: '/app/admin', icon: Shield },
+          { label: 'Users', href: '/app/admin/users', icon: User },
+          { label: 'All Reports', href: '/app/admin/reports', icon: BarChart3 },
+          { label: 'Messages', href: '/app/admin/messages', icon: Bell },
+          { label: 'Settings', href: '/app/admin/settings', icon: Gauge },
+        ]
+      : navItems;
 
   return (
     <div className="min-h-screen bg-[rgb(var(--background))] text-[rgb(var(--foreground))]">

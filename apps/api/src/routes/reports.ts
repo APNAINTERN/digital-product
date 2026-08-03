@@ -26,6 +26,8 @@ type ReportExportModule = {
   exportReport?: (report: ExportableReport, format: ExportFormat) => Promise<ExportResult> | ExportResult;
   exportReportToPdf?: (report: ExportableReport) => Promise<ExportResult> | ExportResult;
   exportReportToExcel?: (report: ExportableReport) => Promise<ExportResult> | ExportResult;
+  generatePdfBuffer?: (report: ExportableReport) => Promise<Buffer> | Buffer;
+  generateExcelBuffer?: (report: ExportableReport) => Promise<Buffer> | Buffer;
   default?: (report: ExportableReport, format: ExportFormat) => Promise<ExportResult> | ExportResult;
 };
 
@@ -86,25 +88,37 @@ const exportMetadata = (format: ExportFormat): { mimeType: string; extension: st
 
 const getExportContent = async (report: ExportableReport, format: ExportFormat): Promise<ExportResult> => {
   const exporter = reportExport as ReportExportModule;
+  const analysis =
+    report.data && typeof report.data === 'object'
+      ? (report.data as ExportableReport)
+      : report;
 
   if (exporter.exportReport) {
-    return exporter.exportReport(report, format);
+    return exporter.exportReport(analysis, format);
+  }
+
+  if (format === 'pdf' && exporter.generatePdfBuffer) {
+    return exporter.generatePdfBuffer(analysis);
+  }
+
+  if (format === 'excel' && exporter.generateExcelBuffer) {
+    return exporter.generateExcelBuffer(analysis);
   }
 
   if (format === 'pdf' && exporter.exportReportToPdf) {
-    return exporter.exportReportToPdf(report);
+    return exporter.exportReportToPdf(analysis);
   }
 
   if (format === 'excel' && exporter.exportReportToExcel) {
-    return exporter.exportReportToExcel(report);
+    return exporter.exportReportToExcel(analysis);
   }
 
   if (exporter.default) {
-    return exporter.default(report, format);
+    return exporter.default(analysis, format);
   }
 
   if (format === 'json') {
-    return JSON.stringify(report, null, 2);
+    return JSON.stringify(analysis, null, 2);
   }
 
   throw new AppError('Report export service is unavailable', 501, 'EXPORT_UNAVAILABLE');

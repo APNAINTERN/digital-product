@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Bot, FileSearch, Gauge, Globe, Search, Sparkles } from 'lucide-react'
 import toast from 'react-hot-toast'
-import api from '../../lib/api'
+import api, { getApiErrorMessage } from '../../lib/api'
 import { normalizeUrlInput } from '../../lib/utils'
 import { useReportStatus } from '../../hooks/useReportStatus'
 import { Button, Card, Input, Progress, Spinner } from '../../components/ui'
@@ -46,7 +46,7 @@ export default function AnalyzePage() {
       navigate(`/app/analyze?id=${data.reportId}`, { replace: true })
       toast.success('Analysis started')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not start analysis')
+      toast.error(getApiErrorMessage(error, 'Could not start analysis'))
     } finally {
       setSubmitting(false)
     }

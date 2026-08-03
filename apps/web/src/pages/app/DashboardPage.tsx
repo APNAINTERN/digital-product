@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowUpRight, BarChart3, Crown, Globe2, Sparkles, Zap } from 'lucide-react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts'
 import toast from 'react-hot-toast'
-import api from '../../lib/api'
+import api, { getApiErrorMessage } from '../../lib/api'
 import { formatDate, formatNumber, normalizeUrlInput } from '../../lib/utils'
 import { getArray, reportPayload, scoreFromReport } from '../../lib/reportData'
 import { useAuthStore } from '../../stores/authStore'
@@ -64,7 +64,7 @@ export default function DashboardPage() {
       toast.success('Analysis queued')
       navigate(`/app/analyze?id=${data.reportId}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to start analysis')
+      toast.error(getApiErrorMessage(error, 'Unable to start analysis'))
     } finally {
       setSubmitting(false)
     }
