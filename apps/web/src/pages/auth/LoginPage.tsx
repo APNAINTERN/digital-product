@@ -6,14 +6,9 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Spinner } from '@/components/ui/Spinner';
-import { api, getApiErrorMessage } from '@/lib/api';
+import { loginWithPassword } from '@/lib/auth';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
-import type { User } from '@/types';
-
-type AuthResponse = {
-  token: string;
-  user: User;
-};
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -29,12 +24,12 @@ export const LoginPage = () => {
     setIsSubmitting(true);
 
     try {
-      const { data } = await api.post<AuthResponse>('/auth/login', { email, password });
+      const data = await loginWithPassword(email, password);
       setAuth(data);
       toast.success('Welcome back to SEO Vision AI');
       navigate(from, { replace: true });
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to sign in'));
+      toast.error(error instanceof Error ? error.message : 'Unable to sign in');
     } finally {
       setIsSubmitting(false);
     }
@@ -42,14 +37,15 @@ export const LoginPage = () => {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to monitor reports, launch audits, and turn SEO opportunities into focused growth work."
+      title="Sign in to SEO Vision AI"
+      subtitle="Analyze any website, unlock SEO scores, competitor intel, and AI growth plans."
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
+            type="email"
             autoComplete="email"
             inputMode="email"
             value={email}
@@ -59,9 +55,9 @@ export const LoginPage = () => {
           />
         </div>
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-sm font-semibold text-[rgb(var(--primary))]">
+            <Link to="/forgot-password" className="text-xs font-semibold text-[rgb(var(--primary))]">
               Forgot password?
             </Link>
           </div>
@@ -71,14 +67,23 @@ export const LoginPage = () => {
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="Your password"
+            placeholder="••••••••"
             required
           />
         </div>
 
         <div className="rounded-2xl border border-teal-300/20 bg-teal-400/10 px-4 py-3 text-sm text-[rgb(var(--muted-foreground))]">
-          Demo credentials: <span className="font-semibold text-[rgb(var(--foreground))]">demo@seovision.ai</span> /
-          <span className="font-semibold text-[rgb(var(--foreground))]"> Demo123!</span>
+          {isSupabaseConfigured ? (
+            <>
+              Auth via <span className="font-semibold text-[rgb(var(--foreground))]">Supabase</span>. First time?
+              use <Link to="/register" className="font-semibold text-[rgb(var(--primary))]">Create workspace</Link>.
+            </>
+          ) : (
+            <>
+              Demo credentials: <span className="font-semibold text-[rgb(var(--foreground))]">demo@seovision.ai</span> /
+              <span className="font-semibold text-[rgb(var(--foreground))]"> Demo123!</span>
+            </>
+          )}
         </div>
 
         <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
@@ -88,9 +93,9 @@ export const LoginPage = () => {
       </form>
 
       <p className="mt-6 text-center text-sm text-[rgb(var(--muted-foreground))]">
-        New to SEO Vision AI?{' '}
+        New here?{' '}
         <Link to="/register" className="font-semibold text-[rgb(var(--primary))]">
-          Create an account
+          Create a free account
         </Link>
       </p>
     </AuthLayout>

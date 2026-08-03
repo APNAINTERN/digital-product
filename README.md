@@ -50,14 +50,26 @@ Vercel cannot use local SQLite. Create a free DB on [Neon](https://neon.tech) (o
 
 ### 3. Environment variables (Vercel → Settings → Environment Variables)
 
-| Name | Example |
-|------|---------|
-| `DATABASE_URL` | `postgresql://...@...neon.tech/neondb?sslmode=require` |
-| `JWT_SECRET` | long random string |
+| Name | Value |
+|------|--------|
+| `DATABASE_URL` | Supabase **Database** connection URI (Settings → Database → URI). Not the publishable key. |
+| `JWT_SECRET` | any long random string |
 | `CLIENT_URL` | `https://your-app.vercel.app` |
 | `API_URL` | `https://your-app.vercel.app` |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://hflapipozwwwinbbfpuh.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | your `sb_publishable_…` key |
+| `SUPABASE_URL` | same as `NEXT_PUBLIC_SUPABASE_URL` |
+| `SUPABASE_PUBLISHABLE_KEY` | same as publishable key |
 
-Do **not** set `VITE_API_URL` when API and web are on the same Vercel domain (default `/api` works).
+Do **not** set `VITE_API_URL` when API and web are on the same Vercel domain.
+
+### Supabase Auth settings
+
+In Supabase → Authentication → Providers → Email:
+- Enable Email provider
+- For easiest demo, turn **off** “Confirm email” (or users must confirm before login)
+
+Then use **Create workspace** on the site to register — login uses Supabase Auth (not the old local-only demo password DB).
 
 ### 4. Redeploy
 

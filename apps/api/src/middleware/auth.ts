@@ -2,6 +2,11 @@ import type { RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma.js';
 import * as config from '../config.js';
+import {
+  getSupabaseUserFromToken,
+  isSupabaseAuthEnabled,
+  upsertAppUserFromSupabase,
+} from '../lib/supabase.js';
 import { AppError } from './errorHandler.js';
 
 export type AuthenticatedUser = {
@@ -94,21 +99,34 @@ const getRequestToken = (req: Parameters<RequestHandler>[0]): string | undefined
   return cookies?.auth_token ?? cookies?.token ?? cookies?.jwt;
 };
 
-const verifyToken = (token: string): JwtPayload => {
+const tryLocalJwt = (token: string): JwtPayload | null => {
   try {
     const decoded = jwt.verify(token, getJwtSecret());
     if (typeof decoded !== 'object' || decoded === null || typeof decoded.userId !== 'string') {
-      throw new AppError('Invalid authentication token', 401, 'INVALID_TOKEN');
+      return null;
     }
-
     return { userId: decoded.userId };
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    }
-
-    throw new AppError('Invalid or expired authentication token', 401, 'INVALID_TOKEN');
+  } catch {
+    return null;
   }
+};
+
+const resolveUserFromToken = async (token: string): Promise<AuthenticatedUser | null> => {
+  const local = tryLocalJwt(token);
+  if (local) {
+    return prisma.user.findUnique({ where: { id: local.userId } });
+  }
+
+  if (!isSupabaseAuthEnabled()) {
+    return null;
+  }
+
+  const supabaseUser = await getSupabaseUserFromToken(token);
+  if (!supabaseUser) {
+    return null;
+  }
+
+  return upsertAppUserFromSupabase(supabaseUser);
 };
 
 export const optionalAuth: RequestHandler = async (req, _res, next) => {
@@ -118,8 +136,7 @@ export const optionalAuth: RequestHandler = async (req, _res, next) => {
       return next();
     }
 
-    const payload = verifyToken(token);
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await resolveUserFromToken(token);
     if (user) {
       req.user = user;
       req.authToken = token;
@@ -138,10 +155,9 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
       throw new AppError('Authentication required', 401, 'AUTH_REQUIRED');
     }
 
-    const payload = verifyToken(token);
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await resolveUserFromToken(token);
     if (!user) {
-      throw new AppError('User not found', 401, 'USER_NOT_FOUND');
+      throw new AppError('Invalid or expired authentication token', 401, 'INVALID_TOKEN');
     }
 
     req.user = user;

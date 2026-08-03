@@ -6,11 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Spinner } from '@/components/ui/Spinner';
-import { api, getApiErrorMessage } from '@/lib/api';
-
-type MessageResponse = {
-  message: string;
-};
+import { requestPasswordReset } from '@/lib/auth';
 
 export const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -22,11 +18,11 @@ export const ForgotPasswordPage = () => {
     setIsSubmitting(true);
 
     try {
-      const { data } = await api.post<MessageResponse>('/auth/forgot-password', { email });
-      setMessage(data.message);
+      const nextMessage = await requestPasswordReset(email);
+      setMessage(nextMessage);
       toast.success('Reset instructions requested');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to request reset email'));
+      toast.error(error instanceof Error ? error.message : 'Unable to request reset email');
     } finally {
       setIsSubmitting(false);
     }

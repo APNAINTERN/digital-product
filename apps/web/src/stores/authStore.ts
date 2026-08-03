@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api, authTokenStorageKey } from '@/lib/api'
+import { logoutAuth } from '@/lib/auth'
 import type { User } from '@/types'
 
 const userStorageKey = 'seo-vision-user'
@@ -56,6 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   logout: () => {
+    void logoutAuth()
     window.localStorage.removeItem(authTokenStorageKey)
     window.localStorage.removeItem(userStorageKey)
     set({ user: null, token: null, isHydrated: true })

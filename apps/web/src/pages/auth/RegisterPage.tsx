@@ -6,14 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Spinner } from '@/components/ui/Spinner';
-import { api, getApiErrorMessage } from '@/lib/api';
+import { registerWithPassword } from '@/lib/auth';
 import { useAuthStore } from '@/stores/authStore';
-import type { User } from '@/types';
-
-type AuthResponse = {
-  token: string;
-  user: User;
-};
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -28,12 +22,17 @@ export const RegisterPage = () => {
     setIsSubmitting(true);
 
     try {
-      const { data } = await api.post<AuthResponse>('/auth/register', { name, email, password });
+      const data = await registerWithPassword(name, email, password);
+      if (data.needsEmailConfirmation || !data.token) {
+        toast.success('Account created. Confirm your email, then sign in.');
+        navigate('/login', { replace: true });
+        return;
+      }
       setAuth(data);
-      toast.success('Workspace created. Check your inbox to verify your email.');
+      toast.success('Workspace created');
       navigate('/app', { replace: true });
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to create account'));
+      toast.error(error instanceof Error ? error.message : 'Unable to create account');
     } finally {
       setIsSubmitting(false);
     }
@@ -80,11 +79,6 @@ export const RegisterPage = () => {
             placeholder="At least 8 characters"
             required
           />
-        </div>
-
-        <div className="rounded-2xl border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-sm text-[rgb(var(--muted-foreground))]">
-          Demo credentials: <span className="font-semibold text-[rgb(var(--foreground))]">demo@seovision.ai</span> /
-          <span className="font-semibold text-[rgb(var(--foreground))]"> Demo123!</span>
         </div>
 
         <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>

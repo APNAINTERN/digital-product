@@ -14,6 +14,11 @@ import * as config from '../config.js';
 import { optionalAuth, requireAuth } from '../middleware/auth.js';
 import type { AuthenticatedUser } from '../middleware/auth.js';
 import { AppError, asyncHandler } from '../middleware/errorHandler.js';
+import {
+  getSupabaseUserFromToken,
+  isSupabaseAuthEnabled,
+  upsertAppUserFromSupabase,
+} from '../lib/supabase.js';
 
 const router = Router();
 
@@ -231,6 +236,41 @@ router.post(
     }
 
     sendAuthResponse(res, user);
+  }),
+);
+
+router.post(
+  '/supabase/sync',
+  asyncHandler(async (req, res) => {
+    if (!isSupabaseAuthEnabled()) {
+      throw new AppError('Supabase auth is not configured on the server', 501, 'SUPABASE_DISABLED');
+    }
+
+    const body = z
+      .object({
+        accessToken: z.string().min(1).optional(),
+      })
+      .parse(req.body);
+
+    const accessToken =
+      body.accessToken ||
+      (typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ')
+        ? req.headers.authorization.slice(7)
+        : undefined);
+
+    if (!accessToken) {
+      throw new AppError('Supabase access token is required', 400, 'MISSING_ACCESS_TOKEN');
+    }
+
+    const supabaseUser = await getSupabaseUserFromToken(accessToken);
+    if (!supabaseUser) {
+      throw new AppError('Invalid Supabase session', 401, 'INVALID_SUPABASE_SESSION');
+    }
+
+    const user = await upsertAppUserFromSupabase(supabaseUser);
+    // Keep using the Supabase access token as the API bearer token.
+    setAuthCookie(res, accessToken);
+    res.json({ token: accessToken, user: publicUser(user) });
   }),
 );
 
