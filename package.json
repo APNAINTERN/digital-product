@@ -11,7 +11,7 @@
     "dev:api": "npm run dev -w @seo-vision/api",
     "dev:web": "npm run dev -w @seo-vision/web",
     "build": "npm run build -w @seo-vision/api && npm run build -w @seo-vision/web",
-    "vercel-build": "npm run db:generate -w @seo-vision/api && npm run db:push -w @seo-vision/api && npm run build -w @seo-vision/api && npm run build -w @seo-vision/web",
+    "vercel-build": "npm run db:generate -w @seo-vision/api && node scripts/vercel-db-push.mjs && npm run build -w @seo-vision/api && npm run build -w @seo-vision/web",
     "db:push": "npm run db:push -w @seo-vision/api",
     "db:seed": "npm run db:seed -w @seo-vision/api",
     "setup": "npm install && npm run db:push && npm run db:seed"

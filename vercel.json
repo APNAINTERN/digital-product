@@ -3,12 +3,12 @@
   "installCommand": "npm install",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "apps/web/dist",
-  "framework": "vite",
+  "framework": null,
   "functions": {
     "api/[[...path]].ts": {
       "maxDuration": 60,
       "memory": 1024,
-      "includeFiles": "apps/api/{dist,prisma}/**"
+      "includeFiles": "apps/api/{dist,prisma,prisma.config.ts}/**"
     }
   },
   "rewrites": [

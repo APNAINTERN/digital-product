@@ -1,36 +1,61 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Built by `npm run vercel-build` before this function is bundled.
-import app from '../apps/api/dist/app.js';
-import { ensureSeedData } from '../apps/api/dist/lib/seedOnBoot.js';
+let appPromise: Promise<((req: unknown, res: unknown) => unknown) | null> | null = null;
+let seedPromise: Promise<void> | null = null;
 
-let boot: Promise<void> | undefined;
-
-async function prepare() {
-  if (!boot) {
-    boot = ensureSeedData().catch((error: unknown) => {
-      console.error('Seed bootstrap failed', error);
-      boot = undefined;
-      throw error;
-    });
+async function loadApp() {
+  if (!appPromise) {
+    appPromise = import('../apps/api/dist/app.js')
+      .then((mod) => (mod.default ?? mod) as (req: unknown, res: unknown) => unknown)
+      .catch((error) => {
+        console.error('Failed to load Express app', error);
+        appPromise = null;
+        throw error;
+      });
   }
-  await boot;
+  return appPromise;
+}
+
+async function prepareDatabase() {
+  if (!seedPromise) {
+    seedPromise = import('../apps/api/dist/lib/seedOnBoot.js')
+      .then(async (mod) => {
+        if (typeof mod.ensureSeedData === 'function') {
+          await mod.ensureSeedData();
+        }
+      })
+      .catch((error) => {
+        console.error('Seed bootstrap failed', error);
+        seedPromise = null;
+        throw error;
+      });
+  }
+  await seedPromise;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    await prepare();
+    const app = await loadApp();
+    try {
+      await prepareDatabase();
+    } catch {
+      res.status(500).json({
+        error: {
+          message:
+            'Database is not ready. Set DATABASE_URL to your Supabase Postgres URI (Project Settings → Database → URI, add ?sslmode=require).',
+          code: 'DB_NOT_READY',
+        },
+      });
+      return;
+    }
+    return app(req, res);
   } catch (error) {
     console.error(error);
     res.status(500).json({
       error: {
-        message:
-          'Database is not ready. Set DATABASE_URL to a Postgres connection string (e.g. Neon) in Vercel env vars.',
-        code: 'DB_NOT_READY',
+        message: 'API failed to start. Check Vercel build logs and ensure npm run vercel-build completed.',
+        code: 'API_BOOT_FAILED',
       },
     });
-    return;
   }
-
-  return app(req as never, res as never);
 }

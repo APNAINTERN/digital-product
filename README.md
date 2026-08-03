@@ -73,10 +73,18 @@ Then use **Create workspace** on the site to register — login uses Supabase Au
 
 ### 4. Redeploy
 
-After the first successful deploy, open `/api/health`. Demo users are auto-seeded when the DB is empty:
+After a successful deploy, open `/api/health`.
 
-- `demo@seovision.ai` / `Demo123!`
-- `admin@seovision.ai` / `Admin123!`
+**Important:** With Supabase Auth enabled, create your user via **Create workspace** on the site (or Authentication → Users in Supabase). Local seed passwords are for Prisma-only mode.
+
+### Common Vercel build failures
+
+| Error | Fix |
+|------|-----|
+| `Can't reach database server` / `P1001` | Set `DATABASE_URL` to Supabase **pooler** URI (`…pooler.supabase.com:6543/postgres?sslmode=require`), not localhost |
+| `better-sqlite3` / node-gyp native errors | Fixed on latest `main` — redeploy |
+| Missing `apps/web/dist` | Ensure Root Directory is the **repo root** (blank), not `apps/web` |
+| Build OK but login 405 | Redeploy latest `main` (API serverless + SPA rewrite fix) |
 
 ### Local Postgres
 
