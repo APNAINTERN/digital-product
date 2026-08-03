@@ -31,6 +31,24 @@ npm run dev
 | User  | `demo@seovision.ai`   | `Demo123!` |
 | Admin | `admin@seovision.ai`  | `Admin123!`|
 
+## Deploy on Vercel (frontend)
+
+`main` must contain this app (not only the old README). Use Root Directory **repository root** (uses `vercel.json`) **or** set Root Directory to `apps/web`.
+
+1. In Vercel → Project → Settings → General:
+   - **Framework Preset:** Vite
+   - **Root Directory:** leave blank (repo root) *or* `apps/web`
+   - **Build Command:** leave default from `vercel.json` / `npm run build`
+   - **Output Directory:** `apps/web/dist` (repo root) or `dist` (if root is `apps/web`)
+2. Production Branch: `main` (or the branch that contains the full app)
+3. Add env var if your API is hosted elsewhere:
+   - `VITE_API_URL` = `https://your-api-host` (no trailing slash)
+4. Redeploy
+
+SPA routes (`/login`, `/app`, …) are rewritten to `index.html` via `vercel.json` so deep links do not 404.
+
+> The Express API (`apps/api`) is **not** a static Vercel site. Host it on Railway, Render, Fly.io, or similar, then set `VITE_API_URL` on Vercel. CORS already allows `CLIENT_URL`.
+
 ## Features
 
 - Sign up / login / forgot password / email verification / profile

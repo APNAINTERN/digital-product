@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Link, useParams } from 'react-router-dom'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Download, ExternalLink, Image, Lock, ShieldCheck, Sparkles } from 'lucide-react'
-import api from '../../lib/api'
+import api, { apiBaseUrl } from '../../lib/api'
 import { asRecord, booleanLabel, getArray, getNumber, getString, reportPayload, scoreFromReport } from '../../lib/reportData'
 import { formatDate, formatNumber } from '../../lib/utils'
 import { ActionPlanTimeline } from '../../components/report/ActionPlanTimeline'
@@ -117,7 +117,7 @@ export default function ReportDetailPage() {
         </div>
         <div className="export-actions">
           {(['pdf', 'excel', 'json'] as const).map((format) => (
-            <a className="sv-button sv-button--secondary sv-button--md" href={`/api/reports/${report.id}/export/${format}`} key={format}>
+            <a className="sv-button sv-button--secondary sv-button--md" href={`${apiBaseUrl}/reports/${report.id}/export/${format}`} key={format}>
               <Download size={16} /> {format.toUpperCase()}
             </a>
           ))}

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Download, Eye, GitCompare, Star, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import api from '../../lib/api'
+import api, { apiBaseUrl, getApiErrorMessage } from '../../lib/api'
 import { formatDate } from '../../lib/utils'
 import { Button, Card, EmptyState, Input, Modal, ScoreRing, Spinner, Badge } from '../../components/ui'
 import type { Pagination, Report } from '../../types'
@@ -99,9 +99,9 @@ export default function ReportsPage() {
                     <Star size={16} />
                   </Button>
                   <Link className="icon-link" to={`/app/reports/${report.id}`}><Eye size={16} /></Link>
-                  <a className="icon-link" href={`/api/reports/${report.id}/export/pdf`}><Download size={16} /> PDF</a>
-                  <a className="icon-link" href={`/api/reports/${report.id}/export/excel`}>XLSX</a>
-                  <a className="icon-link" href={`/api/reports/${report.id}/export/json`}>JSON</a>
+                  <a className="icon-link" href={`${apiBaseUrl}/reports/${report.id}/export/pdf`}><Download size={16} /> PDF</a>
+                  <a className="icon-link" href={`${apiBaseUrl}/reports/${report.id}/export/excel`}>XLSX</a>
+                  <a className="icon-link" href={`${apiBaseUrl}/reports/${report.id}/export/json`}>JSON</a>
                   <Button onClick={() => window.confirm('Delete this report?') && deleteMutation.mutate(report.id)} size="sm" variant="danger">
                     <Trash2 size={16} />
                   </Button>

@@ -4,8 +4,7 @@
   "private": true,
   "description": "SEO Vision AI – Complete Website SEO Audit & Business Growth Platform",
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
   "scripts": {
     "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w @seo-vision/api\" \"npm run dev -w @seo-vision/web\"",
