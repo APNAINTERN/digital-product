@@ -1,0 +1,25 @@
+{
+  "name": "seo-vision-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SEO Vision AI – Complete Website SEO Audit & Business Growth Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w @seo-vision/api\" \"npm run dev -w @seo-vision/web\"",
+    "dev:api": "npm run dev -w @seo-vision/api",
+    "dev:web": "npm run dev -w @seo-vision/web",
+    "build": "npm run build -w @seo-vision/api && npm run build -w @seo-vision/web",
+    "db:push": "npm run db:push -w @seo-vision/api",
+    "db:seed": "npm run db:seed -w @seo-vision/api",
+    "setup": "npm install && npm run db:push && npm run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

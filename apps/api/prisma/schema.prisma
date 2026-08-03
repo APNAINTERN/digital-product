@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum ReportStatus {
+  QUEUED
+  CRAWLING
+  ANALYZING
+  GENERATING
+  COMPLETED
+  FAILED
+}
+
+enum DataConfidence {
+  VERIFIED
+  ESTIMATED
+  AI_GENERATED
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  passwordHash     String?
+  name             String?
+  avatarUrl        String?
+  role             Role      @default(USER)
+  plan             Plan      @default(FREE)
+  emailVerified    Boolean   @default(false)
+  verificationToken String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  googleId         String?   @unique
+  apiCallsUsed     Int       @default(0)
+  apiCallsLimit    Int       @default(10)
+  theme            String    @default("system")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  reports          Report[]
+  savedWebsites    SavedWebsite[]
+  notifications    Notification[]
+  apiUsage         ApiUsage[]
+  favorites        Favorite[]
+}
+
+model SavedWebsite {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String
+  domain    String
+  label     String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, domain])
+}
+
+model Report {
+  id              String       @id @default(cuid())
+  userId          String
+  url             String
+  domain          String
+  status          ReportStatus @default(QUEUED)
+  progress        Int          @default(0)
+  statusMessage   String?
+  errorMessage    String?
+  seoScore        Int?
+  performanceScore Int?
+  healthScore     Int?
+  summary         String?
+  data            String?      // JSON blob of full analysis
+  favorite        Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  completedAt     DateTime?
+
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorites       Favorite[]
+
+  @@index([userId, createdAt])
+  @@index([domain])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  reportId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reportId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("info")
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model ApiUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  method    String
+  status    Int
+  credits   Int      @default(1)
+  meta      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model FeatureFlag {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  description String?
+  enabled     Boolean @default(true)
+}
+
+model SubscriptionPlan {
+  id            String  @id @default(cuid())
+  code          Plan    @unique
+  name          String
+  priceMonthly  Float
+  priceYearly   Float
+  analysesLimit Int
+  features      String  // JSON array
+  highlighted   Boolean @default(false)
+  active        Boolean @default(true)
+}
