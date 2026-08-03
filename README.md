@@ -52,7 +52,8 @@ Vercel cannot use local SQLite. Create a free DB on [Neon](https://neon.tech) (o
 
 | Name | Value |
 |------|--------|
-| `DATABASE_URL` | Supabase **Database** connection URI (Settings → Database → URI). Not the publishable key. |
+| `DATABASE_URL` | *(optional if using password below)* Supabase Postgres URI + `?sslmode=require` |
+| `SUPABASE_DB_PASSWORD` | **Easiest:** Supabase → Project Settings → Database → **Database password** |
 | `JWT_SECRET` | any long random string |
 | `CLIENT_URL` | `https://your-app.vercel.app` |
 | `API_URL` | `https://your-app.vercel.app` |
@@ -60,6 +61,8 @@ Vercel cannot use local SQLite. Create a free DB on [Neon](https://neon.tech) (o
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | your `sb_publishable_…` key |
 | `SUPABASE_URL` | same as `NEXT_PUBLIC_SUPABASE_URL` |
 | `SUPABASE_PUBLISHABLE_KEY` | same as publishable key |
+
+**Minimum to fix “Database not configured”:** set **`SUPABASE_DB_PASSWORD`** (or `DATABASE_URL`) on Vercel, then **Redeploy**.
 
 Do **not** set `VITE_API_URL` when API and web are on the same Vercel domain.
 

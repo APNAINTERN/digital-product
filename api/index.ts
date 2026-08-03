@@ -39,27 +39,31 @@ async function prepareDatabase(): Promise<{ ok: true } | { ok: false; message: s
     return {
       ok: false,
       message:
-        'Database is not ready. In Vercel → Settings → Environment Variables set DATABASE_URL to your Supabase Postgres URI (Project Settings → Database → Connect → URI). Add ?sslmode=require',
+        'Database is not ready. In Vercel → Environment Variables add SUPABASE_DB_PASSWORD (Supabase database password) OR DATABASE_URL (full Postgres URI), then Redeploy.',
     };
   }
 }
 
 /**
  * Single entry for all /api/* traffic (via vercel.json rewrite).
- * Nested paths like /api/auth/register do not work with api/[[...path]].ts on Vercel.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const app = await loadApp();
     const db = await prepareDatabase();
 
-    // Always allow health checks so deploy debugging is easy
     const url = typeof req.url === 'string' ? req.url : '';
     if (!db.ok && !url.includes('/api/health') && url !== '/health') {
       res.status(503).json({
         error: {
           message: db.message,
           code: 'DB_NOT_READY',
+          help: {
+            easiest:
+              'Vercel → Settings → Environment Variables → Add SUPABASE_DB_PASSWORD = your Supabase Database password, then Redeploy',
+            alternative:
+              'Or set DATABASE_URL to the full URI from Supabase → Project Settings → Database → Connect → URI (?sslmode=require)',
+          },
         },
       });
       return;
@@ -71,7 +75,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         service: 'seo-vision-api',
         database: db.ok ? 'ready' : 'not_ready',
         timestamp: new Date().toISOString(),
-        ...(db.ok ? {} : { message: db.message }),
+        ...(db.ok
+          ? {}
+          : {
+              message: db.message,
+              help: {
+                easiest: 'Add Vercel env SUPABASE_DB_PASSWORD = Supabase database password, then Redeploy',
+                alternative: 'Or set DATABASE_URL = Supabase Database Connect URI with ?sslmode=require',
+              },
+            }),
       });
       return;
     }

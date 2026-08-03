@@ -34,9 +34,9 @@ export const registerWithPassword = async (
       )
     }
 
-    if (/DB_NOT_READY|Database is not ready|DATABASE_URL/i.test(apiMessage)) {
+    if (/DB_NOT_READY|Database is not ready|DATABASE_URL|SUPABASE_DB_PASSWORD/i.test(apiMessage)) {
       throw new Error(
-        'Database not configured. In Vercel set DATABASE_URL to your Supabase Postgres URI (Database → Connect → URI) with ?sslmode=require, then Redeploy.',
+        'Database not configured. In Vercel add SUPABASE_DB_PASSWORD (Supabase → Settings → Database → Database password), then Redeploy. Or set full DATABASE_URL.',
       )
     }
 
@@ -57,7 +57,7 @@ export const loginWithPassword = async (email: string, password: string): Promis
     if (/page could not be found|NOT_FOUND|DB_NOT_READY|Database is not ready/i.test(apiMessage)) {
       throw new Error(
         apiMessage.includes('Database') || apiMessage.includes('DB_NOT_READY')
-          ? 'Database not configured. Set DATABASE_URL (Supabase Postgres URI) in Vercel, then Redeploy.'
+          ? 'Database not configured. In Vercel add SUPABASE_DB_PASSWORD (or DATABASE_URL), then Redeploy.'
           : 'API not reachable. Redeploy latest main and check /api/health.',
       )
     }

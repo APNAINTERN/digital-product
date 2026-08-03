@@ -2,7 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import pg from 'pg';
 
-import { config } from '../config.js';
+import { config, resolveDatabaseUrl } from '../config.js';
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -11,19 +11,21 @@ const globalForPrisma = globalThis as unknown as {
 
 const connectionString =
   config.databaseUrl ??
+  resolveDatabaseUrl() ??
   process.env.DATABASE_URL ??
   'postgresql://seovision:seovision@localhost:5432/seovision?schema=public';
+
+const needsSsl =
+  /sslmode=require/i.test(connectionString) ||
+  /supabase\.co|neon\.tech|pooler/i.test(connectionString) ||
+  Boolean(process.env.VERCEL);
 
 const pool =
   globalForPrisma.pgPool ??
   new pg.Pool({
     connectionString,
-    // Vercel/serverless: keep pool small
     max: process.env.VERCEL ? 1 : 10,
-    ssl:
-      connectionString.includes('sslmode=require') || connectionString.includes('neon.tech')
-        ? { rejectUnauthorized: false }
-        : undefined,
+    ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
   });
 
 export const prisma =
