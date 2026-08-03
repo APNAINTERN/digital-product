@@ -16,23 +16,32 @@ export const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
+    setInfo(null);
 
     try {
-      const data = await registerWithPassword(name, email, password);
+      const data = await registerWithPassword(name.trim(), email.trim(), password);
+
       if (data.needsEmailConfirmation || !data.token) {
-        toast.success('Account created. Confirm your email, then sign in.');
-        navigate('/login', { replace: true });
+        const message =
+          data.info ||
+          'Account created. Confirm your email, then sign in. (Or disable Confirm email in Supabase Auth settings.)';
+        setInfo(message);
+        toast.success('Account created — confirm email to sign in');
         return;
       }
+
       setAuth(data);
-      toast.success('Workspace created');
+      toast.success('Account created successfully');
       navigate('/app', { replace: true });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to create account');
+      const message = error instanceof Error ? error.message : 'Unable to create account';
+      toast.error(message);
+      setInfo(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -63,9 +72,12 @@ export const RegisterPage = () => {
             inputMode="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@company.com"
+            placeholder="you@gmail.com"
             required
           />
+          <p className="text-xs text-[rgb(var(--muted-foreground))]">
+            Use a real email (e.g. Gmail). Fake domains like example.com are blocked by Supabase.
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
@@ -80,6 +92,12 @@ export const RegisterPage = () => {
             required
           />
         </div>
+
+        {info ? (
+          <div className="rounded-2xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm leading-relaxed text-[rgb(var(--muted-foreground))]">
+            {info}
+          </div>
+        ) : null}
 
         <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
           {isSubmitting ? <Spinner /> : null}

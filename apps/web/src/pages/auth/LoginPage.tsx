@@ -7,15 +7,14 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Spinner } from '@/components/ui/Spinner';
 import { loginWithPassword } from '@/lib/auth';
-import { isSupabaseConfigured } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
-  const [email, setEmail] = useState('demo@seovision.ai');
-  const [password, setPassword] = useState('Demo123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/app';
 
@@ -24,7 +23,7 @@ export const LoginPage = () => {
     setIsSubmitting(true);
 
     try {
-      const data = await loginWithPassword(email, password);
+      const data = await loginWithPassword(email.trim(), password);
       setAuth(data);
       toast.success('Welcome back to SEO Vision AI');
       navigate(from, { replace: true });
@@ -50,7 +49,7 @@ export const LoginPage = () => {
             inputMode="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@company.com"
+            placeholder="you@gmail.com"
             required
           />
         </div>
@@ -73,17 +72,11 @@ export const LoginPage = () => {
         </div>
 
         <div className="rounded-2xl border border-teal-300/20 bg-teal-400/10 px-4 py-3 text-sm text-[rgb(var(--muted-foreground))]">
-          {isSupabaseConfigured ? (
-            <>
-              Auth via <span className="font-semibold text-[rgb(var(--foreground))]">Supabase</span>. First time?
-              use <Link to="/register" className="font-semibold text-[rgb(var(--primary))]">Create workspace</Link>.
-            </>
-          ) : (
-            <>
-              Demo credentials: <span className="font-semibold text-[rgb(var(--foreground))]">demo@seovision.ai</span> /
-              <span className="font-semibold text-[rgb(var(--foreground))]"> Demo123!</span>
-            </>
-          )}
+          New here?{' '}
+          <Link to="/register" className="font-semibold text-[rgb(var(--primary))]">
+            Create a free account
+          </Link>
+          . After signup you can sign in immediately (API auth).
         </div>
 
         <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
@@ -91,13 +84,6 @@ export const LoginPage = () => {
           Sign in
         </Button>
       </form>
-
-      <p className="mt-6 text-center text-sm text-[rgb(var(--muted-foreground))]">
-        New here?{' '}
-        <Link to="/register" className="font-semibold text-[rgb(var(--primary))]">
-          Create a free account
-        </Link>
-      </p>
     </AuthLayout>
   );
 };

@@ -1,15 +1,19 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
+/** Fallback so production still works if Vercel build env vars were missing. */
+const FALLBACK_URL = 'https://hflapipozwwwinbbfpuh.supabase.co'
+const FALLBACK_KEY = 'sb_publishable_ZxFsUieTiWg2FfWfK0VGhg_cwEwDqV1'
+
 const supabaseUrl =
   (import.meta.env.VITE_SUPABASE_URL as string | undefined) ||
   (import.meta.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined) ||
-  ''
+  FALLBACK_URL
 
 const supabaseKey =
   (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
   (import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ||
-  ''
+  FALLBACK_KEY
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey)
 

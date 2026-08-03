@@ -210,11 +210,13 @@ router.post(
         name: input.name,
         passwordHash,
         verificationToken,
+        emailVerified: true,
         apiCallsLimit: 10,
       },
     });
 
-    await sendVerificationEmail(user.email, verificationToken);
+    // Best-effort verification email — account is already usable.
+    void sendVerificationEmail(user.email, verificationToken).catch(() => undefined);
     sendAuthResponse(res, user, 201);
   }),
 );
