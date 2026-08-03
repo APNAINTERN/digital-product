@@ -13,3 +13,5 @@ coverage
 *.tsbuildinfo
 .turbo
 .cache
+apps/api/prisma/*.db
+apps/api/dev.db

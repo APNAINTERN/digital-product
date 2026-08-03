@@ -14,12 +14,15 @@ A modern SaaS application for analyzing any website URL and generating SEO score
 ## Quick start
 
 ```bash
+docker compose up -d   # local Postgres
 npm install
 cp .env.example apps/api/.env
 npm run db:push
 npm run db:seed
 npm run dev
 ```
+
+> SQLite is no longer used — Postgres is required (local Docker or Neon) so the same code can run on Vercel.
 
 - Web: http://localhost:5173
 - API: http://localhost:4000/api/health
@@ -31,23 +34,46 @@ npm run dev
 | User  | `demo@seovision.ai`   | `Demo123!` |
 | Admin | `admin@seovision.ai`  | `Admin123!`|
 
-## Deploy on Vercel (frontend)
+## Deploy on Vercel (frontend + API)
 
-`main` must contain this app (not only the old README). Use Root Directory **repository root** (uses `vercel.json`) **or** set Root Directory to `apps/web`.
+The login **405** error happens when `POST /api/auth/login` is rewritten to a static page. This repo now deploys the Express API as a Vercel serverless function on the **same project**.
 
-1. In Vercel → Project → Settings → General:
-   - **Framework Preset:** Vite
-   - **Root Directory:** leave blank (repo root) *or* `apps/web`
-   - **Build Command:** leave default from `vercel.json` / `npm run build`
-   - **Output Directory:** `apps/web/dist` (repo root) or `dist` (if root is `apps/web`)
-2. Production Branch: `main` (or the branch that contains the full app)
-3. Add env var if your API is hosted elsewhere:
-   - `VITE_API_URL` = `https://your-api-host` (no trailing slash)
-4. Redeploy
+### 1. Create a free Postgres database (required)
 
-SPA routes (`/login`, `/app`, …) are rewritten to `index.html` via `vercel.json` so deep links do not 404.
+Vercel cannot use local SQLite. Create a free DB on [Neon](https://neon.tech) (or Supabase), then copy the connection string.
 
-> The Express API (`apps/api`) is **not** a static Vercel site. Host it on Railway, Render, Fly.io, or similar, then set `VITE_API_URL` on Vercel. CORS already allows `CLIENT_URL`.
+### 2. Vercel project settings
+
+- **Root Directory:** repository root (leave blank)
+- **Production Branch:** `main`
+- Framework can stay Vite (`vercel.json` controls build)
+
+### 3. Environment variables (Vercel → Settings → Environment Variables)
+
+| Name | Example |
+|------|---------|
+| `DATABASE_URL` | `postgresql://...@...neon.tech/neondb?sslmode=require` |
+| `JWT_SECRET` | long random string |
+| `CLIENT_URL` | `https://your-app.vercel.app` |
+| `API_URL` | `https://your-app.vercel.app` |
+
+Do **not** set `VITE_API_URL` when API and web are on the same Vercel domain (default `/api` works).
+
+### 4. Redeploy
+
+After the first successful deploy, open `/api/health`. Demo users are auto-seeded when the DB is empty:
+
+- `demo@seovision.ai` / `Demo123!`
+- `admin@seovision.ai` / `Admin123!`
+
+### Local Postgres
+
+```bash
+docker compose up -d
+cp .env.example apps/api/.env
+npm run db:push && npm run db:seed
+npm run dev
+```
 
 ## Features
 

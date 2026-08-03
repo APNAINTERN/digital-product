@@ -1,12 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install --workspace=@seo-vision/web --include-workspace-root",
-  "buildCommand": "npm run build -w @seo-vision/web",
+  "installCommand": "npm install",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "apps/web/dist",
   "framework": "vite",
+  "functions": {
+    "api/[[...path]].ts": {
+      "maxDuration": 60,
+      "memory": 1024,
+      "includeFiles": "apps/api/{dist,prisma}/**"
+    }
+  },
   "rewrites": [
     {
-      "source": "/((?!assets/).*)",
+      "source": "/((?!api(?:/|$)|assets/).*)",
       "destination": "/index.html"
     }
   ]

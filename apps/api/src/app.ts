@@ -31,15 +31,43 @@ const CLIENT_URL = configValue('CLIENT_URL', 'http://localhost:5173');
 
 const app = express();
 
-const allowedOrigins = CLIENT_URL.split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const allowedOrigins = new Set(
+  [
+    ...CLIENT_URL.split(',').map((origin) => origin.trim()),
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : '',
+  ].filter(Boolean),
+);
+
+const isAllowedOrigin = (origin?: string | null): boolean => {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const host = new URL(origin).hostname;
+    return host.endsWith('.vercel.app');
+  } catch {
+    return false;
+  }
+};
 
 app.set('trust proxy', 1);
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 app.use(
   cors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`Origin ${origin ?? ''} not allowed by CORS`));
+    },
     credentials: true,
   }),
 );
