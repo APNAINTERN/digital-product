@@ -2,6 +2,11 @@ import axios, { type AxiosError } from 'axios'
 
 export const authTokenStorageKey = 'seo-vision-token'
 
+/** Production: set VITE_API_URL to your API origin, e.g. https://api.example.com */
+const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '')
+
+export const apiBaseUrl = configuredApiUrl ? `${configuredApiUrl}/api` : '/api'
+
 export type ApiErrorPayload = {
   message?: string
   error?: string
@@ -26,7 +31,7 @@ export const getApiErrorMessage = (error: unknown, fallback = 'Something went wr
 }
 
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
